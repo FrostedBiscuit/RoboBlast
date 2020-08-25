@@ -27,16 +27,12 @@ namespace RoboBlast.Player
             _rigidbody.MovePosition(direction + _transfrom.position);
 
             CmdMove(direction);
-
-            Debug.Log("Im moving! :D");
         }
 
         [Command]
         public void CmdMove(Vector3 amount)
         {
             _rigidbody.MovePosition(amount + _transfrom.position);
-
-            Debug.Log("Im moving on the server! :D");
         }
     }
 }

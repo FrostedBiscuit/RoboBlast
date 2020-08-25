@@ -9,7 +9,7 @@ namespace RoboBlast.Player
     [RequireComponent(typeof(IMovementController))]
     [RequireComponent(typeof(IHealthController))]
     [RequireComponent(typeof(IAttackController))]
-    public class Player : NetworkBehaviour
+    public class PlayerController : NetworkBehaviour
     {
         #region Start & Stop Callbacks
 
@@ -88,6 +88,9 @@ namespace RoboBlast.Player
 
             _playerMovementInput = FindObjectOfType<JoystickInput>();
             _playerAttackInput = FindObjectOfType<AttackInput>();
+
+            // Does this break SOLID principles? Probably...
+            //(_playerHealthController as PlayerAttakc)?.AssignAuthority(connectionToClient);
 
             _playerMovementInput.OnPlayerMoveInput += _playerMovementController.Move;
 

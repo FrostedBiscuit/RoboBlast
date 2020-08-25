@@ -19,6 +19,14 @@ namespace RoboBlast.Player
 
         public void Attack()
         {
+            CmdAttack();
+        }
+
+        [Command]
+        public void CmdAttack()
+        {
+            Debug.Log("Attacking on the server! :D");
+
             var hits = Physics.OverlapSphere(_attackPointTransform.position, _areaOfEffectRadius);
             var opponentHealthController = hits.Select(h => h.GetComponent<IHealthController>()).Where(hc => hc != null).FirstOrDefault();
 
@@ -27,5 +35,10 @@ namespace RoboBlast.Player
 
             opponentHealthController.TakeDamage(DamageToDeal);
         }
+
+        //public void AssignAuthority(NetworkConnection connection)
+        //{
+        //    netIdentity.AssignClientAuthority(connection);
+        //}
     }
 }

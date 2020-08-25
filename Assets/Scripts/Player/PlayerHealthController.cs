@@ -21,6 +21,7 @@ namespace RoboBlast.Player
 
         public float MaxHealth => _maxHealth;
 
+        [SyncEvent]
         public event Action OnDeath;
 
         [SerializeField]
@@ -34,24 +35,18 @@ namespace RoboBlast.Player
             CurrentHealth = MaxHealth;
         }
 
+        [Server]
         public void TakeDamage(float amount)
         {
-            //CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0f, float.MaxValue);
+            if (!isServer)
+                return;
 
-            CmdTakeDamage(amount);
+            CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0f, float.MaxValue);
 
             if (CurrentHealth == 0f)
                 OnDeath?.Invoke();
-        }
 
-        [Command]
-        public void CmdTakeDamage(float amount)
-        {
-            CurrentHealth = Mathf.Clamp(CurrentHealth - amount, 0f, float.MaxValue);
-
-            Debug.Log($"Health going down {amount}");
-            //if (CurrentHealth == 0f)
-            //    OnDeath?.Invoke();
+            Debug.Log($"Current health {CurrentHealth}");
         }
     }
 }
