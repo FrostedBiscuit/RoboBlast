@@ -1,22 +1,30 @@
 ﻿using Mirror;
+using RoboBlast.Input;
 using RoboBlast.Input.Interfaces;
+using RoboBlast.Managers;
 using RoboBlast.Repositories;
-using RoboBlast.UI;
-using RoboBlast.UI.Interfaces;
+using System;
 using UnityEngine;
 
 namespace RoboBlast.Player
 {
     public class PlayerEntity : NetworkBehaviour
     {
+        public event Action<string, bool> OnNameChanged;
+        public event Action<bool, bool> OnReadyStatusChanged;
+
         //[HideInInspector]
         [SyncVar(hook = "playerNameUpdated")]
         public string Name;
+
+        [SyncVar(hook = "playerReadyStatusUpdated")]
+        public bool Ready = false;
 
         [SerializeField]
         private GameObject _playerPrefab;
 
         private ISpawnPlayerInput _spawnInput;
+        private IPlayerReadyInput _readyInput;
 
         private void Start()
         {
@@ -26,7 +34,9 @@ namespace RoboBlast.Player
             CmdSetName(PlayerNameRepository.PlayerName);
 
             _spawnInput = FindObjectOfType<SpawnPlayerInput>();
-            _spawnInput.SpawnPlayerCharacterInput += CmdSpawnPlayer;
+            _readyInput = FindObjectOfType<PlayerReadyInput>();
+
+            registerFromUIEvents();
         }
 
         [Command]
@@ -40,12 +50,12 @@ namespace RoboBlast.Player
             NetworkServer.Spawn(player, gameObject);
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
-            if (!hasAuthority)
-                return;
-
-            _spawnInput.SpawnPlayerCharacterInput -= CmdSpawnPlayer;
+            if (hasAuthority)
+            {
+                unregisterFromUIEvents();
+            }
         }
 
         [Command]
@@ -54,9 +64,52 @@ namespace RoboBlast.Player
             Name = name;
         }
 
+        [Command]
+        public void CmdUpdateReadyStatus(bool ready)
+        {
+            Ready = ready;
+        }
+        
         private void playerNameUpdated(string oldValue, string newValue)
         {
-            GetComponent<UILobbyPlayer>().UpdateLabel();
+            OnNameChanged?.Invoke(newValue, hasAuthority);
+        }
+
+        private void playerReadyStatusUpdated(bool oldValue, bool newValue)
+        {
+            OnReadyStatusChanged?.Invoke(Ready, hasAuthority);
+
+            RoboBlastNetworkManager.instance.SetPlayerReady(this);
+        }
+
+        public override void OnStopServer()
+        {
+            unregisterFromUIEvents();
+        }
+
+        public override void OnStopClient()
+        {
+            unregisterFromUIEvents();
+
+            base.OnStopClient();
+        }
+
+        private void registerFromUIEvents()
+        {
+            if (hasAuthority)
+            {
+                _spawnInput.SpawnPlayerCharacterInput += CmdSpawnPlayer;
+                _readyInput.OnReadyStatusUpdated += CmdUpdateReadyStatus;
+            }
+        }
+
+        private void unregisterFromUIEvents()
+        {
+            if (hasAuthority)
+            {
+                _spawnInput.SpawnPlayerCharacterInput -= CmdSpawnPlayer;
+                _readyInput.OnReadyStatusUpdated -= CmdUpdateReadyStatus;
+            }
         }
     }
 }

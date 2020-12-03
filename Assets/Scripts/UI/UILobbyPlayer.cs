@@ -1,5 +1,4 @@
-﻿using Mirror;
-using RoboBlast.Player;
+﻿using RoboBlast.Player;
 using UnityEngine;
 
 namespace RoboBlast.UI
@@ -7,21 +6,44 @@ namespace RoboBlast.UI
     [RequireComponent(typeof(PlayerEntity))]
     public class UILobbyPlayer : MonoBehaviour
     {
-        private const string ReadyText = "Ready";
-        private const string NotReadyText = "Not ready";
-
         private PlayerEntity _player;
+        private UIPlayerLobby _playerLobby;
 
-        public void UpdateLabel()
+        private void Start()
         {
             _player = GetComponent<PlayerEntity>();
+            _playerLobby = FindObjectOfType<UIPlayerLobby>();
 
-            var playerLobby = FindObjectOfType<UIPlayerLobby>();
+            updateName(_player.Name, _player.hasAuthority);
+            updateReadyStatus(_player.Ready, _player.hasAuthority);
 
-            if (_player.netIdentity.hasAuthority)
-                playerLobby.LocalPlayerLabel.Name = _player.Name;
+            _player.OnNameChanged += updateName;
+            _player.OnReadyStatusChanged += updateReadyStatus;
+        }
+
+        private void updateName(string name, bool localPlayer)
+        {
+            if (localPlayer)
+                _playerLobby.LocalPlayerLabel.Name = name;
             else
-                playerLobby.LocalPlayerLabel.Name = _player.Name;
+                _playerLobby.RemotePlayerLabel.Name = name;
+        }
+
+        private void updateReadyStatus(bool ready, bool localPlayer)
+        {
+            if (localPlayer)
+                _playerLobby.LocalPlayerLabel.ReadyStatus = ready;
+            else
+                _playerLobby.RemotePlayerLabel.ReadyStatus = ready;
+        }
+
+        private void OnDestroy()
+        {
+            updateName("Waiting for player...", _player.hasAuthority);
+            updateReadyStatus(false, _player.hasAuthority);
+
+            _player.OnNameChanged -= updateName;
+            _player.OnReadyStatusChanged -= updateReadyStatus;
         }
     }
 }

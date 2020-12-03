@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using TMPro;
 using Mirror;
+using RoboBlast.Managers;
 
 namespace RoboBlast.Input
 {
@@ -21,7 +22,7 @@ namespace RoboBlast.Input
 
         private void Awake()
         {
-            _networkManager = NetworkManager.singleton;
+            _networkManager = RoboBlastNetworkManager.instance;
         }
 
         public void Host()

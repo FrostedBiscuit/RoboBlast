@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using RoboBlast.UI.Interfaces;
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 namespace RoboBlast.UI
@@ -23,11 +21,11 @@ namespace RoboBlast.UI
                 } 
             }
 
-            public string ReadyStatus
+            public bool ReadyStatus
             {
                 set
                 {
-                    _readyStatus.text = value;
+                    _readyStatus.text = value ? "Ready" : "Not ready";
                 }
             }
         }

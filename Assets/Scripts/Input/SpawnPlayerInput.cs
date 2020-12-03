@@ -1,5 +1,6 @@
 ﻿using Mirror;
 using RoboBlast.Input.Interfaces;
+using RoboBlast.Managers;
 using System;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ public class SpawnPlayerInput : MonoBehaviour, ISpawnPlayerInput
 
     public void SpawnPlayer()
     {
-        if (!NetworkClient.isConnected)
+        if (!NetworkClient.isConnected && RoboBlastNetworkManager.instance.BothPlayersReady)
             return;
 
         SpawnPlayerCharacterInput?.Invoke();

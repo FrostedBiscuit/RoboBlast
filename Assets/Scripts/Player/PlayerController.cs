@@ -3,6 +3,7 @@ using Mirror;
 using RoboBlast.Player.Interfaces;
 using RoboBlast.Input;
 using RoboBlast.Input.Interfaces;
+using System.Linq;
 
 namespace RoboBlast.Player
 {
@@ -67,6 +68,8 @@ namespace RoboBlast.Player
 
         private Renderer _renderer;
 
+        private Transform _pointOfInterest;
+
         private IMovementController _playerMovementController;
         private IHealthController _playerHealthController;
         private IAttackController _playerAttackController;
@@ -76,11 +79,17 @@ namespace RoboBlast.Player
 
         private void Start()
         {
+            tryFindOpponent();
+
             if (_graphics != null)
                 _renderer = GetComponentInChildren<Renderer>();
 
-            if (hasAuthority == false)
+            if (hasAuthority == false && (NetworkServer.active || NetworkClient.active))
+            {
+                GetComponent<PlayerAnimationController>().enabled = false;
+
                 return;
+            }
 
             _playerMovementController = GetComponent<IMovementController>();
             _playerHealthController = GetComponent<IHealthController>();
@@ -89,17 +98,19 @@ namespace RoboBlast.Player
             _playerMovementInput = FindObjectOfType<JoystickInput>();
             _playerAttackInput = FindObjectOfType<AttackInput>();
 
-            // Does this break SOLID principles? Probably...
-            //(_playerHealthController as PlayerAttakc)?.AssignAuthority(connectionToClient);
-
-            _playerMovementInput.OnPlayerMoveInput += _playerMovementController.Move;
-
-            _playerAttackInput.OnPlayerPrimaryAttack += _playerAttackController.Attack;
+            //_playerAttackInput.OnPlayerPrimaryAttack += _playerAttackController.Attack;
             //_playerAttackInput.OnPlayerPrimaryAttack += _playerAttackController.AltAttack;
+            
+            _playerMovementInput.OnPlayerMoveInput += _playerMovementController.Move;
 
             _playerHealthController.OnDeath += CmdDie;
             
             _renderer.material.SetColor("_Color", Color.blue);
+        }
+
+        private void Update()
+        {
+            lookAtPointOfInterest();
         }
 
         [Command]
@@ -108,6 +119,11 @@ namespace RoboBlast.Player
             Debug.Log("Goodbye cruel server world :(");
 
             NetworkServer.Destroy(gameObject);
+        }
+
+        public void LookAtPoint(Transform point)
+        {
+            _pointOfInterest = point;
         }
 
         private void OnDestroy()
@@ -119,7 +135,38 @@ namespace RoboBlast.Player
             //_playerAttackInput.OnPlayerPrimaryAttack -= _playerAttackController.AltAttack;
 
             _playerMovementInput.OnPlayerMoveInput -= _playerMovementController.Move;
+
             _playerHealthController.OnDeath -= CmdDie;
+        }
+
+        private void tryFindOpponent()
+        {
+            var opponent = FindObjectsOfType<PlayerController>().FirstOrDefault(pc => pc != this);
+
+            if (opponent == null)
+                return;
+
+            opponent.LookAtPoint(transform);
+            LookAtPoint(opponent.transform);
+        }
+
+        private void lookAtPointOfInterest() 
+        {
+            if (_pointOfInterest == null)
+                return;
+
+            Debug.Log($"Looking at point of interest, coords: {_pointOfInterest.position}");
+
+            transform.LookAt(_pointOfInterest, transform.up);
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (_pointOfInterest != null)
+            {
+                Gizmos.color = Color.red;
+                Gizmos.DrawSphere(_pointOfInterest.position, 0.5f);
+            }
         }
     }
 }

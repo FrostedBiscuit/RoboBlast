@@ -1,7 +1,5 @@
 ﻿using Mirror;
 using RoboBlast.Player.Interfaces;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -36,9 +34,9 @@ namespace RoboBlast.Player
             opponentHealthController.TakeDamage(DamageToDeal);
         }
 
-        //public void AssignAuthority(NetworkConnection connection)
-        //{
-        //    netIdentity.AssignClientAuthority(connection);
-        //}
+        public void PrimaryAttack()
+        {
+            Debug.Log("PrimaryAttack");
+        }
     }
 }
